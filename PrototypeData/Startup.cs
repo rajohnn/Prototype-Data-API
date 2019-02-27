@@ -1,10 +1,12 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using PrototypeData.Data;
+using System;
 
 namespace PrototypeData {
 
@@ -20,7 +22,10 @@ namespace PrototypeData {
         public void ConfigureServices(IServiceCollection services) {
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
             var connectionString = Configuration.GetConnectionString("PrototypeDatabase");
-            services.AddDbContext<PrototypeContext>(options => { options.UseSqlServer(connectionString).EnableSensitiveDataLogging(); });
+            services.AddDbContext<PrototypeContext>(options => {
+                options.UseSqlServer(connectionString).EnableSensitiveDataLogging();
+            });
+            services.AddResponseCaching();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -28,6 +33,21 @@ namespace PrototypeData {
             if (env.IsDevelopment()) {
                 app.UseDeveloperExceptionPage();
             }
+
+            app.UseResponseCaching();
+            app.Use(async (context, next) =>
+            {
+                // For GetTypedHeaders, add: using Microsoft.AspNetCore.Http;
+                context.Response.GetTypedHeaders().CacheControl =
+                    new Microsoft.Net.Http.Headers.CacheControlHeaderValue() {
+                        Public = true,
+                        MaxAge = TimeSpan.FromDays(7)
+                    };
+                context.Response.Headers[Microsoft.Net.Http.Headers.HeaderNames.Vary] =
+                    new string[] { "Accept-Encoding" };
+
+                await next();
+            });
 
             app.UseMvc();
         }
