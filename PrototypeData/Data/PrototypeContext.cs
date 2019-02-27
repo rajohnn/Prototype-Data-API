@@ -157,17 +157,17 @@ namespace PrototypeData.Data {
             return results;
         }
 
-        public async Task<List<GPIDto>> GetPartialGPINamesAsync(List<string> partialGPIs) {
+        public async Task<List<GPIDto>> GetPartialGPINamesAsync(string[] gpis) {
             var list = new List<GPIDto>();
             var conn = _ctx.Database.GetDbConnection();
-
+            var partials = new List<string>(gpis);
             try {
                 if (conn.State != ConnectionState.Open)
                     conn.Open();
 
                 var dataTable = new DataTable();
                 dataTable.Columns.Add(new DataColumn("GPI", typeof(string)));
-                partialGPIs.ForEach(gpi => {
+                partials.ForEach(gpi => {
                     dataTable.Rows.Add(gpi);
                 });
 

@@ -28,5 +28,18 @@ namespace PrototypeData.Controllers {
             }
             return results;
         }
+
+        [HttpPost]
+        public async Task<List<GPIDto>> Get([FromBody] string[] ids) {
+            var results = new List<GPIDto>();
+            try {
+                var repo = new PrototypeRepo(_ctx);
+                results = await repo.GetPartialGPINamesAsync(ids);
+            }
+            catch(Exception ex) {
+                System.Diagnostics.Debug.WriteLine(ex);
+            }
+            return results;
+        }
     }
 }
