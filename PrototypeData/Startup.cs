@@ -11,6 +11,7 @@ using System;
 namespace PrototypeData {
 
     public class Startup {
+        readonly string MyAllowSpecificOrigins = "_allowPrototypeAzure";
 
         public Startup(IConfiguration configuration) {
             Configuration = configuration;
@@ -20,12 +21,19 @@ namespace PrototypeData {
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services) {
+            services.AddCors(options => {
+                options.AddPolicy(MyAllowSpecificOrigins, builder => {
+                    builder.WithOrigins("https://protodata.azurewebsites.net").AllowAnyHeader().AllowAnyMethod();
+                });
+            });
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
+
             var connectionString = Configuration.GetConnectionString("PrototypeDatabase");
             services.AddDbContext<PrototypeContext>(options => {
                 options.UseSqlServer(connectionString).EnableSensitiveDataLogging();
             });
             services.AddResponseCaching();
+            
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -33,7 +41,7 @@ namespace PrototypeData {
             if (env.IsDevelopment()) {
                 app.UseDeveloperExceptionPage();
             }
-
+            app.UseCors(MyAllowSpecificOrigins);
             app.UseResponseCaching();
             app.Use(async (context, next) =>
             {
@@ -48,7 +56,7 @@ namespace PrototypeData {
 
                 await next();
             });
-
+            
             app.UseMvc();
         }
     }
